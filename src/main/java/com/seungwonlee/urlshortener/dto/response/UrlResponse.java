@@ -1,4 +1,4 @@
-package com.seungwonlee.urlshortener.dto;
+package com.seungwonlee.urlshortener.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

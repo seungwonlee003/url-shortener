@@ -18,6 +18,9 @@ target/
 *.iws
 *.iml
 *.ipr
+# ignore properties file
+application.properties
+application-API-KEY.properties
 
 ### NetBeans ###
 /nbproject/private/

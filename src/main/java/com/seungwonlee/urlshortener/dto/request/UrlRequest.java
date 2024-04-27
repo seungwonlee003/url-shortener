@@ -1,13 +1,15 @@
-package com.seungwonlee.urlshortener.dto;
+package com.seungwonlee.urlshortener.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomUrlRequest {
+public class UrlRequest {
     private String originalUrl;
-    private String customShortUrl;
 }

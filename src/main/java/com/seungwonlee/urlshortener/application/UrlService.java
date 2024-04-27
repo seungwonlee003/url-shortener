@@ -1,17 +1,16 @@
 package com.seungwonlee.urlshortener.application;
 
+import com.seungwonlee.urlshortener.aspect.ToLog;
 import com.seungwonlee.urlshortener.domain.Url;
 import com.seungwonlee.urlshortener.domain.UrlRepository;
-import com.seungwonlee.urlshortener.dto.CustomUrlRequest;
-import com.seungwonlee.urlshortener.dto.UrlRequest;
-import com.seungwonlee.urlshortener.dto.UrlResponse;
-import com.seungwonlee.urlshortener.dto.ViewCountResponse;
-import com.seungwonlee.urlshortener.exception.CustomShortUrlAlreadyExistsException;
+import com.seungwonlee.urlshortener.dto.request.CustomUrlRequest;
+import com.seungwonlee.urlshortener.dto.request.UrlRequest;
+import com.seungwonlee.urlshortener.dto.response.UrlResponse;
+import com.seungwonlee.urlshortener.dto.response.ViewCountResponse;
 import com.seungwonlee.urlshortener.exception.ShortUrlNotFoundException;
 import com.seungwonlee.urlshortener.util.Base62Encoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,24 +21,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class UrlService {
 
     private final UrlRepository urlRepository;
+    private final GoogleSafeBrowsingService googleSafeBrowsingService;
 
     @Transactional
     public UrlResponse createShortUrl(UrlRequest urlRequest) {
-        Url url = createUrlEntity(urlRequest.getOriginalUrl());
+        String validatedOriginalUrl = validateOriginalUrl(urlRequest.getOriginalUrl());
+        googleSafeBrowsingService.checkUrlSafety(validatedOriginalUrl);
+        Url url = createUrlEntity(validatedOriginalUrl);
         return new UrlResponse(url.getShortUrl());
     }
 
+    @ToLog
     @Transactional
-    public UrlResponse createCustomShortUrl(CustomUrlRequest urlRequest) throws CustomShortUrlAlreadyExistsException {
+    public UrlResponse createCustomShortUrl(CustomUrlRequest urlRequest) {
+        String validatedOriginalUrl = validateOriginalUrl(urlRequest.getOriginalUrl());
+        String validatedCustomShortUrl = validateShortUrl(urlRequest.getCustomShortUrl());
+        googleSafeBrowsingService.checkUrlSafety(validatedOriginalUrl);
         Url url = new Url();
-        url.setOriginalUrl(urlRequest.getOriginalUrl());
+        // encrypt the url using symmetric encryption algo?
+        url.setOriginalUrl(validatedOriginalUrl);
         url.setShortUrl(urlRequest.getCustomShortUrl());
-        // short url is a unique index
-        try {
-            urlRepository.save(url);
-        } catch (DataIntegrityViolationException e) {
-            throw new CustomShortUrlAlreadyExistsException("Custom short URL already exists");
-        }
+        urlRepository.save(url);
         return new UrlResponse(url.getShortUrl());
     }
 
@@ -48,7 +50,7 @@ public class UrlService {
         Url url = findByShortUrl(shortUrl);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, url.getOriginalUrl());
-        url.setViewCount(url.getViewCount() + 1);
+        urlRepository.increaseViewCount(shortUrl);
         return headers;
     }
 
@@ -56,6 +58,24 @@ public class UrlService {
     public ViewCountResponse getShortUrlStats(String shortUrl) {
         Url url = findByShortUrl(shortUrl);
         return new ViewCountResponse(url.getViewCount());
+    }
+
+    // validate in dto level?
+    private String validateShortUrl(String customShortUrl) {
+        if(customShortUrl.length() < 5){
+            throw new IllegalArgumentException("Custom short URL must be at least 5 characters long.");
+        }
+        return customShortUrl;
+    }
+
+    private String validateOriginalUrl(String originalUrl){
+        if (!originalUrl.startsWith("https://") && !originalUrl.startsWith("http://")) {
+            originalUrl = "https://" + originalUrl;
+        }
+        if (originalUrl.length() >= 2083) {
+            throw new IllegalArgumentException("URL length exceeds the limit of 2083 characters");
+        }
+        return originalUrl;
     }
 
     private Url findByShortUrl(String shortUrl) {

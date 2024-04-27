@@ -1,11 +1,10 @@
 package com.seungwonlee.urlshortener.presentation;
 
 import com.seungwonlee.urlshortener.application.UrlService;
-import com.seungwonlee.urlshortener.dto.CustomUrlRequest;
-import com.seungwonlee.urlshortener.dto.UrlRequest;
-import com.seungwonlee.urlshortener.dto.UrlResponse;
-import com.seungwonlee.urlshortener.dto.ViewCountResponse;
-import com.seungwonlee.urlshortener.exception.CustomShortUrlAlreadyExistsException;
+import com.seungwonlee.urlshortener.dto.request.CustomUrlRequest;
+import com.seungwonlee.urlshortener.dto.request.UrlRequest;
+import com.seungwonlee.urlshortener.dto.response.UrlResponse;
+import com.seungwonlee.urlshortener.dto.response.ViewCountResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,8 +24,7 @@ public class UrlController {
     }
 
     @PostMapping("/custom")
-    public ResponseEntity<UrlResponse> createCustomShortUrl(@RequestBody CustomUrlRequest urlRequest)
-            throws CustomShortUrlAlreadyExistsException {
+    public ResponseEntity<UrlResponse> createCustomShortUrl(@RequestBody CustomUrlRequest urlRequest) {
         return ResponseEntity.ok(urlService.createCustomShortUrl(urlRequest));
     }
 
