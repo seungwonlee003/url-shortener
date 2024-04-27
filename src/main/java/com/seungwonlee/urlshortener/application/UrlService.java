@@ -37,11 +37,8 @@ public class UrlService {
         String validatedOriginalUrl = validateOriginalUrl(urlRequest.getOriginalUrl());
         String validatedCustomShortUrl = validateShortUrl(urlRequest.getCustomShortUrl());
         googleSafeBrowsingService.checkUrlSafety(validatedOriginalUrl);
-        Url url = new Url();
         // encrypt the url using symmetric encryption algo?
-        url.setOriginalUrl(validatedOriginalUrl);
-        url.setShortUrl(urlRequest.getCustomShortUrl());
-        urlRepository.save(url);
+        Url url = createUrlEntity(validatedOriginalUrl, validatedCustomShortUrl);
         return new UrlResponse(url.getShortUrl());
     }
 
@@ -60,7 +57,6 @@ public class UrlService {
         return new ViewCountResponse(url.getViewCount());
     }
 
-    // validate in dto level?
     private String validateShortUrl(String customShortUrl) {
         if(customShortUrl.length() < 5){
             throw new IllegalArgumentException("Custom short URL must be at least 5 characters long.");
@@ -88,6 +84,14 @@ public class UrlService {
         url.setOriginalUrl(originalUrl);
         urlRepository.save(url);
         url.setShortUrl(Base62Encoder.encode(url.getId()));
+        return url;
+    }
+
+    private Url createUrlEntity(String originalUrl, String shortUrl){
+        Url url = new Url();
+        url.setOriginalUrl(originalUrl);
+        url.setShortUrl(shortUrl);
+        urlRepository.save(url);
         return url;
     }
 }

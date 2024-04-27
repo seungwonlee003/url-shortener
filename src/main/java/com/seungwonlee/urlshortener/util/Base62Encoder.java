@@ -13,6 +13,6 @@ public class Base62Encoder {
             number /= BASE;
         }
 
-        return encodedString.length() == 0 ? "0" : encodedString.toString();
+        return encodedString.isEmpty() ? "0" : encodedString.toString();
     }
 }
