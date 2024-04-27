@@ -37,7 +37,7 @@ public class UrlService {
         String validatedOriginalUrl = validateOriginalUrl(urlRequest.getOriginalUrl());
         String validatedCustomShortUrl = validateShortUrl(urlRequest.getCustomShortUrl());
         googleSafeBrowsingService.checkUrlSafety(validatedOriginalUrl);
-        // encrypt the url using symmetric encryption algo?
+        // encrypt the url using symmetric encryption algo
         Url url = createUrlEntity(validatedOriginalUrl, validatedCustomShortUrl);
         return new UrlResponse(url.getShortUrl());
     }
